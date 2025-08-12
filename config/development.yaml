@@ -1,0 +1,15 @@
+auto_fix: false
+confirm_before_fix: true
+supported_languages:
+  - python
+  - javascript
+  - typescript
+
+fixer:
+  ai_provider: openai
+  model: gpt-4
+  backup_dir: ./backups
+
+logging:
+  level: INFO
+  file: logs/ai_assistant.log
