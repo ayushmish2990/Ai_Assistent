@@ -63,3 +63,11 @@ models/fine_tuned/
 # Local development
 .DS_Store
 Thumbs.db
+
+# Sensitive files
+direct_test.bat
+run_with_logging.py
+scripts/test_github.py
+setup_and_run.bat
+.env
+.env.local
