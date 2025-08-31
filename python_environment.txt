@@ -1,0 +1,8 @@
+Python Version: 3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]
+Executable: C:\Users\ayush\ai-coding-assistant\.venv\Scripts\python.exe
+Working Directory: C:\Users\ayush\ai-coding-assistant
+
+Environment Variables:
+PATH: C:\Python313\Scripts\;C:\Python313\;C:\Program Files\Common Files\Oracle\Java\javapath;D:\oracle\product\10.2.0\db_2\bin;C:\oracle\product\10.2.0\db_1\bin;C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\MATLAB\R2024b\runtime\win64;C:\Program Files\MATLAB\R2024b\bin;C:\Users\ayush\OneDrive\Desktop\msys2-x86_64-20250221.exe;C:\Program Files\Git\cmd;C:\Program Files\MongoDB\Server\8.0\bin;C:\ProgramData\chocolatey\bin;C:\Program Files\nodejs\;C:\Program Files\GitHub CLI\;C:\Users\ayush\AppData\Local\Microsoft\WindowsApps;;C:\Users\ayush\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files\mongosh\;C:\Users\ayush\AppData\Roaming\npm;C:\Users\ayush\AppData\Local\Programs\Windsurf\bin;c:\Users\ayush\.windsurf\extensions\ms-python.debugpy-2025.6.0-win32-x64\bundled\scripts\noConfigScripts
+PYTHONPATH: Not set
+GITHUB_TOKEN: Not set

@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\Users\ayush\ai-coding-assistant\test_env.py", line 33, in <module>
+    main()
+  File "C:\Users\ayush\ai-coding-assistant\test_env.py", line 5, in main
+    with open('test_output.txt', 'w') as f:
+PermissionError: [Errno 13] Permission denied: 'test_output.txt'

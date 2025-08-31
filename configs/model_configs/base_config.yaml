@@ -1,0 +1,26 @@
+model:
+  model_name: "gpt-4"  # Default model, can be overridden
+  max_tokens: 2048
+  temperature: 0.7
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+  stop_sequences: ["\n```", "\nclass", "\ndef", "\n#"]
+
+data:
+  data_dir: "data"
+  cache_dir: ".cache"
+  max_file_size: 1048576  # 1MB
+  supported_extensions: [".py", ".js", ".jsx", ".ts", ".tsx", ".java", ".c", ".cpp"]
+
+training:
+  batch_size: 8
+  learning_rate: 5e-5
+  num_epochs: 10
+  warmup_steps: 1000
+  weight_decay: 0.01
+  gradient_accumulation_steps: 4
+  max_grad_norm: 1.0
+
+debug: false
+log_level: "INFO"

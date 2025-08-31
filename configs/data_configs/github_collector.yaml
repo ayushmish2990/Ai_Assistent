@@ -1,0 +1,119 @@
+# GitHub API Configuration
+github:
+  # GitHub API token (recommended for higher rate limits)
+  token: ${GITHUB_TOKEN:}
+  
+  # Rate limiting
+  rate_limit_delay: 1.0  # seconds between requests
+  max_retries: 3
+  retry_delay: 5.0  # seconds between retries
+
+# Repository Search Criteria
+search:
+  # Languages to search for
+  languages:
+    - python
+    - javascript
+    - java
+    - cpp
+    - go
+    - rust
+  
+  # Repository filters
+  min_stars: 100
+  max_repos: 1000
+  has_tests: true
+  min_commits: 100
+  min_contributors: 2
+  exclude_forks: true
+  exclude_archived: true
+
+# Data Collection
+collection:
+  # Output directories
+  base_dir: "data"
+  raw_data_dir: "${collection.base_dir}/raw"
+  processed_data_dir: "${collection.base_dir}/processed"
+  cache_dir: "${collection.base_dir}/cache"
+  
+  # File size limits (in bytes)
+  max_file_size: 1048576  # 1MB
+  min_file_size: 100  # 100 bytes
+  
+  # File patterns to include/exclude
+  include_patterns:
+    - "*.py"
+    - "*.js"
+    - "*.jsx"
+    - "*.ts"
+    - "*.tsx"
+    - "*.java"
+    - "*.cpp"
+    - "*.hpp"
+    - "*.h"
+    - "*.go"
+    - "*.rs"
+  
+  exclude_patterns:
+    - "*/test/*"
+    - "*/tests/*"
+    - "*/node_modules/*"
+    - "*/venv/*"
+    - "*/.git/*"
+    - "*/__pycache__/*"
+    - "*/build/*"
+    - "*/dist/*"
+    - "*.min.js"
+    - "*.bundle.js"
+
+# Synthetic Data Generation
+synthetic:
+  num_samples: 10000
+  languages:
+    - python
+    - javascript
+    - java
+    - cpp
+  
+  # Difficulty levels: easy, medium, hard
+  difficulty_distribution:
+    easy: 0.4
+    medium: 0.4
+    hard: 0.2
+
+# Bug Injection
+bug_injection:
+  enabled: true
+  num_bugs_per_file: 1
+  bug_types:
+    - off_by_one
+    - null_pointer
+    - type_error
+    - logic_error
+    - infinite_loop
+  
+  # Probability of injecting each bug type
+  bug_type_weights:
+    off_by_one: 0.3
+    null_pointer: 0.2
+    type_error: 0.2
+    logic_error: 0.2
+    infinite_loop: 0.1
+
+# Processing
+processing:
+  # Number of worker processes for parallel processing
+  num_workers: 4
+  
+  # Chunk size for parallel processing
+  chunk_size: 100
+  
+  # Maximum number of files to process per repository
+  max_files_per_repo: 1000
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/data_collection.log"
+  max_size_mb: 50
+  backup_count: 5
