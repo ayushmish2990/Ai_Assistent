@@ -13,21 +13,65 @@ from transformers import (
 )
 
 from .config import Config
+from .multi_provider_model_manager import MultiProviderModelManager, OpenAIProvider, HuggingFaceProvider, AnthropicProvider, LocalModelProvider
 
 logger = logging.getLogger(__name__)
 
 class ModelManager:
-    """Handles model loading and text generation."""
+    """Handles model loading and text generation with multi-provider support."""
     
     def __init__(self, config: Config):
         self.config = config
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Initialize multi-provider manager
+        self.multi_provider_manager = MultiProviderModelManager()
+        self._setup_providers()
+        
+        # Legacy support - keep original model/tokenizer for backward compatibility
         self.model = None
         self.tokenizer = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self._load_model()
+        if hasattr(config, 'model') and config.model.model_name:
+            self._load_model()
+    
+    def _setup_providers(self):
+        """Setup all available providers based on configuration."""
+        providers_config = self.config.providers
+        
+        # Setup OpenAI provider
+        if providers_config.openai and providers_config.openai.api_key:
+            openai_provider = OpenAIProvider(providers_config.openai.api_key)
+            self.multi_provider_manager.add_provider("openai", openai_provider)
+            logger.info("OpenAI provider configured")
+        
+        # Setup Hugging Face provider
+        if providers_config.huggingface:
+            hf_provider = HuggingFaceProvider(
+                providers_config.huggingface.api_key,
+                providers_config.huggingface.model_name
+            )
+            self.multi_provider_manager.add_provider("huggingface", hf_provider)
+            logger.info("Hugging Face provider configured")
+        
+        # Setup Anthropic provider
+        if providers_config.anthropic and providers_config.anthropic.api_key:
+            anthropic_provider = AnthropicProvider(providers_config.anthropic.api_key)
+            self.multi_provider_manager.add_provider("anthropic", anthropic_provider)
+            logger.info("Anthropic provider configured")
+        
+        # Setup Local provider
+        if providers_config.local:
+            local_provider = LocalModelProvider(providers_config.local.model_name)
+            self.multi_provider_manager.add_provider("local", local_provider)
+            logger.info("Local provider configured")
+        
+        # Set default provider
+        if providers_config.default_provider in self.multi_provider_manager.providers:
+            self.multi_provider_manager.set_default_provider(providers_config.default_provider)
+            logger.info(f"Default provider set to: {providers_config.default_provider}")
     
     def _load_model(self) -> None:
-        """Load model and tokenizer with enhanced error handling."""
+        """Load model and tokenizer with enhanced error handling (legacy support)."""
         try:
             logger.info(f"Loading tokenizer for model: {self.config.model.model_name}")
             self.tokenizer = AutoTokenizer.from_pretrained(
@@ -69,19 +113,45 @@ class ModelManager:
                 self.config.model.model_name = "gpt2"
                 self._load_model()
             else:
-                raise
+                logger.warning("Legacy model loading failed, using multi-provider system only")
     
     def generate(
+        self,
+        prompt: str,
+        provider: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        **kwargs
+    ) -> str:
+        """Generate text from prompt using multi-provider system with legacy fallback."""
+        try:
+            # Use multi-provider system first
+            if provider:
+                response = self.multi_provider_manager.generate(prompt, provider, max_tokens=max_tokens, temperature=temperature, **kwargs)
+            else:
+                response = self.multi_provider_manager.generate(prompt, max_tokens=max_tokens, temperature=temperature, **kwargs)
+            
+            return response
+            
+        except Exception as e:
+            logger.warning(f"Multi-provider generation failed: {e}")
+            
+            # Fallback to legacy model if available
+            if self.model is not None and self.tokenizer is not None:
+                logger.info("Falling back to legacy model")
+                return self._generate_legacy(prompt, max_tokens, temperature, **kwargs)
+            else:
+                logger.error("No available models for generation")
+                raise RuntimeError("No available models for generation") from e
+    
+    def _generate_legacy(
         self,
         prompt: str,
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         **kwargs
     ) -> str:
-        """Generate text from prompt with enhanced error handling and input validation."""
-        if not self.model or not self.tokenizer:
-            raise RuntimeError("Model not loaded. Please check model initialization.")
-        
+        """Generate text from prompt with enhanced error handling and input validation (legacy)."""
         try:
             # Validate input
             if not prompt or not isinstance(prompt, str):

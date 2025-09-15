@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Core Dependencies
 torch>=2.0.0
 transformers>=4.30.0
@@ -7,57 +6,50 @@ numpy>=1.24.0
 pandas>=2.0.0
 tqdm>=4.65.0
 
-# Data Collection
-requests>=2.28.2
+# Web Framework & API
+fastapi>=0.95.0
+uvicorn>=0.21.0
+flask>=2.3.3
+python-multipart>=0.0.6
+requests>=2.31.0
+
+# Configuration & Environment
+python-dotenv>=1.0.0
+loguru>=0.7.2
+
+# AI Services
+openai>=1.3.5
+
+# Data Collection & Processing
 esprima>=4.0.1
 GitPython>=3.1.31
-tqdm>=4.65.0
 pygments>=2.14.0
-
-# Data Processing
 scikit-learn>=1.2.0
-pandas>=1.5.0
 nltk>=3.8.1
-pygments>=2.14.0
-tree-sitter>=0.20.0
 
-# Code Analysis
-astor>=0.8.1
-astunparse>=1.6.3
+# Code Analysis & Quality
 black>=23.3.0
 mypy>=1.3.0
 pylint>=2.17.0
+astor>=0.8.1
+astunparse>=1.6.3
 
-# Web & API
-fastapi>=0.95.0
-uvicorn>=0.21.0
-python-multipart>=0.0.6
-requests>=2.28.2
-
-# Testing & Quality
+# Testing
 pytest>=7.3.1
 pytest-cov>=4.0.0
 pytest-xdist>=3.3.1
-mypy>=1.3.0
-black>=23.3.0
 isort>=5.12.0
 
-# Development
+# Development & Monitoring
 jupyter>=1.0.0
 ipython>=8.12.0
 wandb>=0.15.0
 matplotlib>=3.7.1
 seaborn>=0.12.2
 
-# Optional (for specific components)
-# tree-sitter-languages>=1.7.0  # For code parsing
+# Optional (for advanced features)
+# tree-sitter>=0.20.0  # For advanced code parsing
+# tree-sitter-languages>=1.7.0  # Language-specific parsers
 # dask>=2023.3.0  # For large-scale data processing
 # ray>=2.4.0  # For distributed training
 # accelerate>=0.18.0  # For distributed training
-=======
-flask==2.3.3
-requests==2.31.0
-python-dotenv==1.0.0
-openai==1.3.5
-loguru==0.7.2
->>>>>>> ca0fe114e2edcf4decfdd76bd6b64b4f8b39bbd4

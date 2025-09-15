@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 Main module for the AI Coding Assistant.
 
@@ -7,11 +6,16 @@ various components of the coding assistant.
 """
 
 import logging
+import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any, Tuple
 
 from .config import Config
 from .model_manager import ModelManager
+from .ai_capabilities import (
+    AICapabilityRegistry, CapabilityType, ProgrammingLanguage,
+    CodeGenerationCapability, DebuggingCapability, TestingCapability, DocumentationCapability
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +31,20 @@ class AICodingAssistant:
         """
         self.config = config or Config()
         self.model_manager = ModelManager(self.config)
+        self.capability_registry = AICapabilityRegistry(self.model_manager, self.config)
         self._setup_logging()
+        
+        # Statistics for tracking usage
+        self.stats = {
+            "code_generations": 0,
+            "code_fixes": 0,
+            "explanations": 0,
+            "tests_generated": 0,
+            "optimizations": 0,
+            "refactorings": 0,
+            "code_reviews": 0,
+            "project_development_tasks": 0
+        }
         
         logger.info("AI Coding Assistant initialized")
     
@@ -45,7 +62,7 @@ class AICodingAssistant:
         max_tokens: Optional[int] = None,
         temperature: Optional[float] = None,
         **kwargs
-    ) -> str:
+    ) -> Dict[str, Any]:
         """Generate code based on a natural language prompt.
         
         Args:
@@ -56,23 +73,17 @@ class AICodingAssistant:
             **kwargs: Additional generation parameters
             
         Returns:
-            Generated code as a string
+            Dictionary containing generated code and additional information
         """
-        generation_config = {
-            "max_tokens": max_tokens or self.config.model.max_tokens,
-            "temperature": temperature or self.config.model.temperature,
-            **kwargs
-        }
-        
-        # Add language-specific context if needed
-        if language.lower() == "python":
-            prompt = f"# Python\n{prompt}"
-        
-        logger.info(f"Generating {language} code for prompt: {prompt[:100]}...")
-        
         try:
-            response = self.model_manager.generate(prompt, **generation_config)
-            return response.strip()
+            return self.execute_capability(
+                capability_type=CapabilityType.CODE_GENERATION,
+                prompt=prompt,
+                language=language,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                **kwargs
+            )
         except Exception as e:
             logger.error(f"Error generating code: {str(e)}")
             raise
@@ -82,31 +93,30 @@ class AICodingAssistant:
         code: str, 
         error_message: Optional[str] = None,
         language: str = "python",
+        context: Optional[Dict[str, Any]] = None,
         **kwargs
-    ) -> str:
+    ) -> Dict[str, Any]:
         """Fix issues in the provided code.
         
         Args:
             code: The code that needs to be fixed
             error_message: Optional error message to help with fixing
             language: Programming language of the code
+            context: Additional context about the code and its environment
             **kwargs: Additional parameters for code fixing
             
         Returns:
-            Fixed code
+            Dictionary containing fixed code and explanation
         """
-        prompt = f"""Fix the following {language} code."""
-        
-        if error_message:
-            prompt += f"\n\nError message: {error_message}"
-        
-        prompt += f"\n\nCode to fix:\n```{language}\n{code}\n```\n\nFixed code:\n```{language}\n"
-        
         try:
-            fixed_code = self.model_manager.generate(prompt, **kwargs)
-            # Clean up the response to extract just the code
-            fixed_code = fixed_code.split(f"```{language}")[-1].split("```")[0].strip()
-            return fixed_code
+            return self.execute_capability(
+                capability_type=CapabilityType.DEBUGGING,
+                code=code,
+                error_message=error_message,
+                language=language,
+                context=context,
+                **kwargs
+            )
         except Exception as e:
             logger.error(f"Error fixing code: {str(e)}")
             raise
@@ -115,30 +125,31 @@ class AICodingAssistant:
         self, 
         code: str, 
         language: str = "python",
-        detail_level: str = "basic"
-    ) -> str:
+        detail_level: str = "standard",
+        doc_format: str = "markdown",
+        **kwargs
+    ) -> Dict[str, Any]:
         """Generate an explanation for the provided code.
         
         Args:
             code: The code to explain
             language: Programming language of the code
-            detail_level: Level of detail ('basic', 'intermediate', 'advanced')
+            detail_level: Level of detail ('minimal', 'standard', 'detailed')
+            doc_format: Format of the documentation ('markdown', 'html', 'text')
+            **kwargs: Additional explanation parameters
             
         Returns:
-            Explanation of the code
+            Dictionary containing the explanation and metadata
         """
-        prompt = f"""Explain the following {language} code with {detail_level} detail:
-        
-        ```{language}
-        {code}
-        ```
-        
-        Explanation:
-        """
-        
         try:
-            explanation = self.model_manager.generate(prompt, temperature=0.3)
-            return explanation.strip()
+            return self.execute_capability(
+                capability_type=CapabilityType.DOCUMENTATION,
+                code=code,
+                language=language,
+                doc_format=doc_format,
+                detail_level=detail_level,
+                **kwargs
+            )
         except Exception as e:
             logger.error(f"Error explaining code: {str(e)}")
             raise
@@ -148,95 +159,283 @@ class AICodingAssistant:
         code: str,
         test_framework: Optional[str] = None,
         language: str = "python",
+        coverage_level: str = "high",
         **kwargs
-    ) -> str:
+    ) -> Dict[str, Any]:
         """Generate test cases for the provided code.
         
         Args:
             code: The code to generate tests for
             test_framework: Testing framework to use (e.g., pytest, unittest)
             language: Programming language of the code
+            coverage_level: Desired test coverage level (low, medium, high)
             **kwargs: Additional generation parameters
             
         Returns:
-            Generated test code
+            Dictionary containing generated test code and metadata
         """
-        if language.lower() == "python" and not test_framework:
-            test_framework = "pytest"
-        
-        prompt = f"""Generate test cases for the following {language} code using {test_framework or 'the standard testing framework'}.
-        
-        Code:
-        ```{language}
-        {code}
-        ```
-        
-        Tests:
-        ```{language}
-        """
-        
         try:
-            tests = self.model_manager.generate(prompt, **kwargs)
-            # Clean up the response to extract just the test code
-            tests = tests.split(f"```{language}")[-1].split("```")[0].strip()
-            return tests
+            return self.execute_capability(
+                capability_type=CapabilityType.TESTING,
+                code=code,
+                test_framework=test_framework,
+                language=language,
+                coverage_level=coverage_level,
+                **kwargs
+            )
         except Exception as e:
             logger.error(f"Error generating tests: {str(e)}")
             raise
+            
+    def execute_capability(
+        self,
+        capability_type: Union[str, CapabilityType],
+        language: Optional[str] = None,
+        validate_params: bool = True,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Unified interface to execute any AI capability.
+        
+        This method provides a standardized way to access all AI capabilities
+        with consistent parameter handling, validation, and error reporting.
+        
+        Args:
+            capability_type: Type of capability to execute (can be string or CapabilityType enum)
+            language: Programming language for the capability (if applicable)
+            validate_params: Whether to validate parameters before execution
+            **kwargs: Parameters specific to the capability
+            
+        Returns:
+            Dictionary containing the results from the capability execution
+            
+        Raises:
+            ValueError: If the capability type is invalid or required parameters are missing
+            NotImplementedError: If the capability is not supported for the specified language
+            Exception: For other execution errors
+        """
+        try:
+            # Convert string to CapabilityType if needed
+            if isinstance(capability_type, str):
+                try:
+                    capability_type = getattr(CapabilityType, capability_type.upper())
+                except AttributeError:
+                    valid_capabilities = [c.name for c in CapabilityType]
+                    raise ValueError(f"Invalid capability type: {capability_type}. Valid options: {valid_capabilities}")
+            
+            # Get the capability from the registry
+            capability = self.capability_registry.get_capability(capability_type)
+            
+            # Add language to kwargs if provided
+            if language is not None:
+                kwargs['language'] = language
+                
+                # Check if the language is supported by this capability
+                supported_languages = capability.get_supported_languages()
+                if supported_languages and language:
+                    try:
+                        lang_enum = getattr(ProgrammingLanguage, language.upper())
+                        if lang_enum not in supported_languages:
+                            logger.warning(
+                                f"Language {language} may not be fully supported by {capability_type.name}. "
+                                f"Supported languages: {[l.value for l in supported_languages]}"
+                            )
+                    except AttributeError:
+                        logger.warning(f"Unknown language: {language}. Attempting execution anyway.")
+            
+            # Parameter validation based on capability type
+            if validate_params:
+                self._validate_capability_params(capability_type, kwargs)
+            
+            # Execute the capability with the provided parameters
+            result = capability.execute(**kwargs)
+            
+            # Ensure result is a dictionary
+            if not isinstance(result, dict):
+                result = {"result": result}
+            
+            # Update statistics based on capability type
+            stat_key = self._get_stat_key_for_capability(capability_type)
+            if stat_key in self.stats:
+                self.stats[stat_key] += 1
+                
+            return result
+        except Exception as e:
+            logger.error(f"Error executing capability {capability_type}: {str(e)}")
+            raise
+    
+    def _get_stat_key_for_capability(self, capability_type: CapabilityType) -> str:
+        """Get the statistics key for a given capability type."""
+        mapping = {
+            CapabilityType.CODE_GENERATION: "code_generations",
+            CapabilityType.DEBUGGING: "code_fixes",
+            CapabilityType.TESTING: "tests_generated",
+            CapabilityType.DOCUMENTATION: "explanations",
+            CapabilityType.REFACTORING: "refactorings",
+            CapabilityType.CODE_REVIEW: "code_reviews",
+            CapabilityType.PROJECT_DEVELOPMENT: "project_development_tasks"
+        }
+        return mapping.get(capability_type, "other_operations")
+    
+    def _validate_capability_params(self, capability_type: CapabilityType, params: Dict[str, Any]) -> None:
+        """Validate parameters for a specific capability type.
+        
+        Args:
+            capability_type: The type of capability to validate parameters for
+            params: The parameters to validate
+            
+        Raises:
+            ValueError: If required parameters are missing
+        """
+        required_params = {
+            CapabilityType.CODE_GENERATION: ["prompt"] if params.get("task") != "optimize" else ["code"],
+            CapabilityType.DEBUGGING: ["code"],
+            CapabilityType.TESTING: ["code"],
+            CapabilityType.DOCUMENTATION: ["code"],
+            CapabilityType.REFACTORING: ["code", "refactoring_type"],
+            CapabilityType.CODE_REVIEW: ["code"],
+            CapabilityType.PROJECT_DEVELOPMENT: ["task_type", "requirements"]
+        }
+        
+        if capability_type in required_params:
+            for param in required_params[capability_type]:
+                if param not in params:
+                    raise ValueError(f"Missing required parameter '{param}' for {capability_type.name}")
     
     def optimize_code(
         self,
         code: str,
         optimization_goal: str = "performance",
         language: str = "python",
+        context: Optional[Dict[str, Any]] = None,
         **kwargs
-    ) -> str:
+    ) -> Dict[str, Any]:
         """Optimize the provided code.
         
         Args:
             code: The code to optimize
             optimization_goal: Goal of optimization ('performance', 'readability', 'memory')
             language: Programming language of the code
+            context: Additional context about the code and its environment
             **kwargs: Additional optimization parameters
             
         Returns:
-            Optimized code
+            Dictionary containing optimized code and explanation of optimizations
         """
-        prompt = f"""Optimize the following {language} code for {optimization_goal}:
-        
-        Original code:
-        ```{language}
-        {code}
-        ```
-        
-        Optimized code:
-        ```{language}
-        """
-        
         try:
-            optimized_code = self.model_manager.generate(
-                prompt, 
-                temperature=0.2,  # Lower temperature for more deterministic output
+            return self.execute_capability(
+                capability_type=CapabilityType.CODE_GENERATION,
+                task="optimize",
+                code=code,
+                optimization_goal=optimization_goal,
+                language=language,
+                context=context,
                 **kwargs
             )
-            # Clean up the response to extract just the optimized code
-            optimized_code = optimized_code.split(f"```{language}")[-1].split("```")[0].strip()
-            return optimized_code
         except Exception as e:
             logger.error(f"Error optimizing code: {str(e)}")
             raise
-=======
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-AI Coding Assistant - Main Application
-"""
-
-import asyncio
-import sys
-import os
-from pathlib import Path
-from loguru import logger
+            
+    def refactor_code(
+        self,
+        code: str,
+        refactoring_type: str = "general",
+        language: str = "python",
+        context: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Refactor code to improve quality and maintainability.
+        
+        Args:
+            code: The code to refactor
+            refactoring_type: Type of refactoring (general, performance, readability, etc.)
+            language: Programming language of the code
+            context: Additional context about the code and its environment
+            **kwargs: Additional parameters for refactoring
+            
+        Returns:
+            Dictionary containing refactored code and explanation
+        """
+        try:
+            return self.execute_capability(
+                capability_type=CapabilityType.REFACTORING,
+                code=code,
+                refactoring_type=refactoring_type,
+                language=language,
+                context=context,
+                **kwargs
+            )
+        except Exception as e:
+            logger.error(f"Error refactoring code: {str(e)}")
+            raise
+            
+    def review_code(
+        self,
+        code: str,
+        language: str = "python",
+        review_focus: Optional[List[str]] = None,
+        context: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Review code and provide feedback.
+        
+        Args:
+            code: The code to review
+            language: Programming language of the code
+            review_focus: Specific aspects to focus on during review
+            context: Additional context about the code and its environment
+            **kwargs: Additional parameters for code review
+            
+        Returns:
+            Dictionary containing review comments and suggestions
+        """
+        try:
+            return self.execute_capability(
+                capability_type=CapabilityType.CODE_REVIEW,
+                code=code,
+                language=language,
+                review_focus=review_focus,
+                context=context,
+                **kwargs
+            )
+        except Exception as e:
+            logger.error(f"Error reviewing code: {str(e)}")
+            raise
+            
+    def develop_project(
+        self,
+        task_type: str,  # architecture, database, api, deployment, etc.
+        requirements: str,
+        language: Optional[str] = None,
+        existing_code: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Execute a project development task.
+        
+        Args:
+            task_type: Type of project development task
+            requirements: Project requirements or specifications
+            language: Target programming language (if applicable)
+            existing_code: Existing codebase (if applicable)
+            context: Additional context about the project
+            **kwargs: Additional parameters for the task
+            
+        Returns:
+            Dictionary containing the development artifacts and explanations
+        """
+        try:
+            return self.execute_capability(
+                capability_type=CapabilityType.PROJECT_DEVELOPMENT,
+                task_type=task_type,
+                requirements=requirements,
+                language=language,
+                existing_code=existing_code,
+                context=context,
+                **kwargs
+            )
+        except Exception as e:
+            logger.error(f"Error in project development task: {str(e)}")
+            raise
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -401,4 +600,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\n��� Goodbye!")
->>>>>>> ca0fe114e2edcf4decfdd76bd6b64b4f8b39bbd4

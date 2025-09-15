@@ -1,0 +1,117 @@
+# Multi-Provider AI Assistant Configuration
+# This configuration file demonstrates how to set up multiple AI providers
+
+# Model configuration (legacy support)
+model:
+  model_name: "gpt-4"
+  max_tokens: 2048
+  temperature: 0.7
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+  stop_sequences:
+    - "\n```"
+    - "\nclass"
+    - "\ndef"
+    - "\n#"
+
+# Data configuration
+data:
+  input_dir: "data/input"
+  output_dir: "data/output"
+  cache_dir: "data/cache"
+  max_file_size: 10485760  # 10MB
+  supported_formats:
+    - ".txt"
+    - ".py"
+    - ".js"
+    - ".md"
+
+# Training configuration
+training:
+  batch_size: 8
+  learning_rate: 0.0001
+  epochs: 10
+  validation_split: 0.2
+  early_stopping_patience: 3
+  checkpoint_dir: "checkpoints"
+  save_best_only: true
+
+# Multi-Provider Configuration
+providers:
+  # OpenAI Configuration
+  openai:
+    model_name: "gpt-3.5-turbo"  # or "gpt-4", "gpt-4-turbo"
+    api_key: "${OPENAI_API_KEY}"  # Set via environment variable
+    max_tokens: 1000
+    temperature: 0.7
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    stop_sequences:
+      - "\n```"
+      - "\nclass"
+      - "\ndef"
+
+  # Hugging Face Configuration
+  huggingface:
+    model_name: "microsoft/DialoGPT-medium"  # or "microsoft/DialoGPT-large", "facebook/blenderbot-400M-distill"
+    api_key: "${HUGGINGFACE_API_KEY}"  # Optional for public models
+    max_tokens: 800
+    temperature: 0.8
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    stop_sequences:
+      - "\n```"
+      - "\nclass"
+
+  # Anthropic Claude Configuration
+  anthropic:
+    model_name: "claude-3-sonnet-20240229"  # or "claude-3-haiku-20240307", "claude-3-opus-20240229"
+    api_key: "${ANTHROPIC_API_KEY}"  # Set via environment variable
+    max_tokens: 1000
+    temperature: 0.7
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    stop_sequences:
+      - "\n```"
+      - "\nclass"
+
+  # Local Model Configuration
+  local:
+    model_name: "microsoft/DialoGPT-small"  # Smaller model for local execution
+    api_key: null  # Not needed for local models
+    max_tokens: 500
+    temperature: 0.7
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    stop_sequences:
+      - "\n```"
+      - "\nclass"
+
+  # Default provider to use when none is specified
+  default_provider: "openai"  # Options: "openai", "huggingface", "anthropic", "local"
+
+# General settings
+debug: false
+log_level: "INFO"
+
+# Environment Variables Guide:
+# Set these environment variables before running the application:
+# 
+# For OpenAI:
+# export OPENAI_API_KEY="your-openai-api-key-here"
+# 
+# For Hugging Face (optional for public models):
+# export HUGGINGFACE_API_KEY="your-huggingface-token-here"
+# 
+# For Anthropic:
+# export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
+#
+# On Windows (PowerShell):
+# $env:OPENAI_API_KEY="your-openai-api-key-here"
+# $env:HUGGINGFACE_API_KEY="your-huggingface-token-here"
+# $env:ANTHROPIC_API_KEY="your-anthropic-api-key-here"

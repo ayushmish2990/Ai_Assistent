@@ -13,8 +13,23 @@ import yaml
 from pydantic import BaseModel, Field, validator
 
 
+class ProviderConfig(BaseModel):
+    """Configuration for a specific AI provider."""
+    
+    model_name: str = Field("gpt-3.5-turbo", description="Name of the model to use")
+    api_key: Optional[str] = Field(None, description="API key for the provider")
+    max_tokens: int = Field(1000, description="Maximum number of tokens to generate")
+    temperature: float = Field(0.7, description="Sampling temperature")
+    top_p: float = Field(0.9, description="Nucleus sampling parameter")
+    frequency_penalty: float = Field(0.0, description="Frequency penalty for generation")
+    presence_penalty: float = Field(0.0, description="Presence penalty for generation")
+    stop_sequences: list[str] = Field(
+        ["\n```", "\nclass", "\ndef", "\n#"], 
+        description="Sequences that stop the generation"
+    )
+
 class ModelConfig(BaseModel):
-    """Configuration for the AI model."""
+    """Configuration for the AI model (legacy support)."""
     
     model_name: str = Field("gpt-4", description="Name of the model to use")
     max_tokens: int = Field(2048, description="Maximum number of tokens to generate")
@@ -26,6 +41,27 @@ class ModelConfig(BaseModel):
         ["\n```", "\nclass", "\ndef", "\n#"], 
         description="Sequences that stop the generation"
     )
+
+class ProvidersConfig(BaseModel):
+    """Configuration for multiple AI providers."""
+    
+    openai: Optional[ProviderConfig] = Field(
+        default_factory=lambda: ProviderConfig(model_name="gpt-3.5-turbo"),
+        description="OpenAI provider configuration"
+    )
+    huggingface: Optional[ProviderConfig] = Field(
+        default_factory=lambda: ProviderConfig(model_name="microsoft/DialoGPT-medium"),
+        description="Hugging Face provider configuration"
+    )
+    anthropic: Optional[ProviderConfig] = Field(
+        default_factory=lambda: ProviderConfig(model_name="claude-3-sonnet-20240229"),
+        description="Anthropic provider configuration"
+    )
+    local: Optional[ProviderConfig] = Field(
+        default_factory=lambda: ProviderConfig(model_name="microsoft/DialoGPT-small"),
+        description="Local model provider configuration"
+    )
+    default_provider: str = Field("openai", description="Default provider to use")
 
 
 class DataConfig(BaseModel):
@@ -58,6 +94,7 @@ class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     data: DataConfig = Field(default_factory=DataConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
+    providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     debug: bool = Field(False, description="Enable debug mode")
     log_level: str = Field("INFO", description="Logging level")
     
