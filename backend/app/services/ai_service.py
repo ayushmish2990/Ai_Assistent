@@ -350,3 +350,6 @@ Help users with coding questions, debugging, architecture decisions, and develop
             content=clean_content,
             confidence=0.9
         )
+
+# Create a global instance for easy import
+ai_service = AIService()

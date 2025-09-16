@@ -219,7 +219,7 @@ os.environ['OPENAI_API_KEY'] = 'your-api-key'
 os.environ['HUGGINGFACE_TOKEN'] = 'your-hf-token'
 
 # Ngrok Configuration
-os.environ['NGROK_AUTH_TOKEN'] = 'your-ngrok-token'
+os.environ['NGROK_AUTH_TOKEN'] = '32lxmVvlcVwe0aIQldrGTv9sB0c_2kNsr5fcetExZj6St12dZ'
 
 # Custom Model Settings
 os.environ['MODEL_NAME'] = 'your-custom-model'
@@ -283,8 +283,10 @@ torch.cuda.empty_cache()
 ```
 
 #### 🔴 Ngrok Connection Issues
-**Solution**:
-- Check your ngrok auth token
+**Solution**: The notebooks now include a working ngrok authentication token. If you encounter issues:
+- Check your ngrok auth token in the notebook cells
+- Verify the tunnel is created successfully
+- Use the provided `ngrok_setup_example.py` for standalone testing
 - Ensure ports are not blocked
 - Try different port numbers
 
@@ -445,6 +447,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 ### 📋 Configuration Files
 - `requirements.txt` - Full project dependencies (in parent directory)
 - `requirements_minimal.txt` - Essential dependencies for model training only
+- `ngrok_setup_example.py` - Standalone ngrok configuration example
 
 ### 📖 Documentation
 - `README.md` - This comprehensive guide
