@@ -19,6 +19,16 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Add root endpoint
+    @application.get("/")
+    async def root():
+        return {
+            "message": "AI Coding Assistant API",
+            "version": "1.0.0",
+            "docs": "/api/docs",
+            "api": "/api/v1"
+        }
+
     # Include routers
     from .api.api_v1.api import api_router
     application.include_router(api_router, prefix="/api/v1")

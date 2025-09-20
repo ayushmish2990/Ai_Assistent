@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core import security
 from app.db.session import SessionLocal
 from app import crud, models, schemas
+from app.services.ai_service import AIService
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -20,6 +21,10 @@ def get_db() -> Generator:
         yield db
     finally:
         db.close()
+
+def get_ai_service() -> AIService:
+    """Dependency to get AI service instance."""
+    return AIService()
 
 def get_current_user(
     db: Session = Depends(get_db),

@@ -12,6 +12,14 @@ from typing import Dict, List, Optional, Union, Any, Tuple
 
 from .config import Config
 from .model_manager import ModelManager
+from .nlp_engine import NLPEngine, NLPResult, IntentType as NLPIntentType
+from .nlp_models import NLPModelManager
+from .nlp_capabilities import (
+    NLPCapability, 
+    IntentClassificationCapability, 
+    CodeUnderstandingCapability, 
+    SemanticSearchCapability
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +33,10 @@ class CapabilityType(Enum):
     DOCUMENTATION = "documentation"
     REFACTORING = "refactoring"
     CODE_REVIEW = "code_review"
+    NATURAL_LANGUAGE_PROCESSING = "nlp"
+    INTENT_CLASSIFICATION = "intent_classification"
+    CODE_UNDERSTANDING = "code_understanding"
+    SEMANTIC_SEARCH = "semantic_search"
     PROJECT_PLANNING = "project_planning"
     DATABASE_DESIGN = "database_design"
     API_DESIGN = "api_design"
@@ -672,6 +684,11 @@ class AICapabilityRegistry:
         self.model_manager = model_manager
         self.config = config or Config()
         self.capabilities: Dict[CapabilityType, AICapability] = {}
+        
+        # Initialize NLP components
+        self.nlp_engine = NLPEngine()
+        self.nlp_model_manager = NLPModelManager()
+        
         self._register_default_capabilities()
     
     def _register_default_capabilities(self) -> None:
@@ -683,6 +700,12 @@ class AICapabilityRegistry:
         self.register_capability(RefactoringCapability(self.model_manager))
         self.register_capability(ProjectDevelopmentCapability(self.model_manager))
         self.register_capability(CodeReviewCapability(self.model_manager))
+        
+        # Register NLP capabilities
+        self.register_capability(NLPCapability(self.model_manager, self.nlp_engine))
+        self.register_capability(IntentClassificationCapability(self.model_manager, self.nlp_model_manager))
+        self.register_capability(CodeUnderstandingCapability(self.model_manager, self.nlp_engine))
+        self.register_capability(SemanticSearchCapability(self.model_manager, self.nlp_engine))
     
     def register_capability(self, capability: AICapability) -> None:
         """Register a new capability.

@@ -6,10 +6,18 @@ including code completion, analysis, generation, and intelligent suggestions.
 
 import os
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Dict, List, Optional, Any, Union
 from openai import OpenAI
 from pydantic import BaseModel
-from app.core.config import settings
+
+# Import core AI capabilities
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
+from core.ai_capabilities import AICapabilityRegistry, CapabilityType
+from core.model_manager import ModelManager
+from core.config import Config
+
+from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +44,8 @@ class AIService:
     """Advanced AI service for code intelligence."""
     
     def __init__(self):
+        """Initialize the AI service with OpenAI client and NLP capabilities."""
+        # Initialize OpenAI client
         api_key = settings.OPENAI_API_KEY
         if api_key and api_key != "your_openai_api_key_here":
             try:
@@ -48,6 +58,16 @@ class AIService:
             self.client = None
             logger.warning("OpenAI API key not configured. AI features will be disabled.")
         self.model = settings.OPENAI_MODEL
+        
+        # Initialize AI capabilities with NLP support
+        try:
+            config = Config()
+            model_manager = ModelManager(config)
+            self.capability_registry = AICapabilityRegistry(model_manager, config)
+            logger.info("AI capabilities with NLP support initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize AI capabilities: {e}")
+            self.capability_registry = None
         
     async def analyze_code(self, code: str, context: CodeContext = None) -> AIResponse:
         """Analyze code for issues, suggestions, and improvements."""
