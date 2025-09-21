@@ -207,3 +207,14 @@ async def get_codebase_status():
         'total_lines': 15000,
         'languages': ['python', 'javascript', 'typescript']
     }
+
+@router.get("/health")
+async def health_check():
+    """
+    Health check endpoint for the codebase service.
+    """
+    return {
+        'status': 'healthy',
+        'service': 'codebase',
+        'timestamp': '2024-01-01T00:00:00Z'
+    }

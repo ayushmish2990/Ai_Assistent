@@ -13,9 +13,14 @@ from pydantic import BaseModel
 # Import core AI capabilities
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
-from core.ai_capabilities import AICapabilityRegistry, CapabilityType
-from core.model_manager import ModelManager
-from core.config import Config
+try:
+    from core.ai_capabilities import AICapabilityRegistry, CapabilityType
+    from core.model_manager import ModelManager
+    from core.config import Config
+    CORE_AI_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Core AI capabilities not available: {e}")
+    CORE_AI_AVAILABLE = False
 
 from ..core.config import settings
 
@@ -60,13 +65,17 @@ class AIService:
         self.model = settings.OPENAI_MODEL
         
         # Initialize AI capabilities with NLP support
-        try:
-            config = Config()
-            model_manager = ModelManager(config)
-            self.capability_registry = AICapabilityRegistry(model_manager, config)
-            logger.info("AI capabilities with NLP support initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize AI capabilities: {e}")
+        if CORE_AI_AVAILABLE:
+            try:
+                config = Config()
+                model_manager = ModelManager(config)
+                self.capability_registry = AICapabilityRegistry(model_manager, config)
+                logger.info("AI capabilities with NLP support initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize AI capabilities: {e}")
+                self.capability_registry = None
+        else:
+            logger.warning("Core AI capabilities not available, skipping initialization")
             self.capability_registry = None
         
     async def analyze_code(self, code: str, context: CodeContext = None) -> AIResponse:
@@ -97,10 +106,18 @@ class AIService:
             
         except Exception as e:
             logger.error(f"Error in code analysis: {e}")
-            return AIResponse(
-                content=f"Error analyzing code: {str(e)}",
-                confidence=0.0
-            )
+            error_msg = str(e)
+            if "insufficient_quota" in error_msg or "429" in error_msg:
+                return AIResponse(
+                    content="AI analysis is temporarily unavailable due to quota limits. Please check your OpenAI billing and usage limits.",
+                    confidence=0.0,
+                    reasoning="OpenAI API quota exceeded"
+                )
+            else:
+                return AIResponse(
+                    content=f"Error analyzing code: {str(e)}",
+                    confidence=0.0
+                )
     
     async def generate_code(self, prompt: str, context: CodeContext = None) -> AIResponse:
         """Generate code based on natural language description."""

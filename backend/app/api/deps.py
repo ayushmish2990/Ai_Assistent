@@ -26,6 +26,16 @@ def get_ai_service() -> AIService:
     """Dependency to get AI service instance."""
     return AIService()
 
+def get_collaboration_service():
+    """Dependency to get collaboration service instance."""
+    from app.services.collaboration_service import CollaborationService
+    return CollaborationService()
+
+def get_error_detection_service():
+    """Dependency to get error detection service instance."""
+    from app.services.error_detection_service import ErrorDetectionService
+    return ErrorDetectionService()
+
 def get_current_user(
     db: Session = Depends(get_db),
     token: str = Depends(reusable_oauth2)
