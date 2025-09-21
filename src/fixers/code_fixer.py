@@ -43,8 +43,6 @@ class CodeFixer:
         self.config = config or {}
         self.ai_provider = self.config.get('ai_provider', 'openai')
         self.model = self.config.get('model', 'gpt-4')
-        self.backup_dir = Path(self.config.get('backup_dir', './backups'))
-        self.backup_dir.mkdir(exist_ok=True)
         
         # Initialize AI client
         if OPENAI_AVAILABLE and os.getenv('OPENAI_API_KEY'):
@@ -53,24 +51,6 @@ class CodeFixer:
         else:
             logger.warning("OpenAI not available - using rule-based fixes only")
             self.ai_client = None
-    
-    def create_backup(self, file_path: str) -> str:
-        """Create a backup of the file before modification"""
-        try:
-            file_path = Path(file_path)
-            timestamp = int(asyncio.get_event_loop().time())
-            backup_name = f"{file_path.stem}_{timestamp}{file_path.suffix}.backup"
-            backup_path = self.backup_dir / backup_name
-            
-            import shutil
-            shutil.copy2(file_path, backup_path)
-            
-            logger.info(f"Backup created: {backup_path}")
-            return str(backup_path)
-            
-        except Exception as e:
-            logger.error(f"Failed to create backup: {e}")
-            return None
     
     async def generate_fix(self, error_analysis) -> Optional[FixSuggestion]:
         """Generate a fix suggestion"""
@@ -99,6 +79,36 @@ class CodeFixer:
         
         return None
     
+    def show_diff(self, fix_suggestion: FixSuggestion) -> str:
+        """Show a diff of the proposed changes"""
+        return f"- {fix_suggestion.original_code}\n+ {fix_suggestion.fixed_code}"
+
+class CodeApplier:
+    """Applies code fixes to files."""
+
+    def __init__(self, config: Dict = None):
+        self.config = config or {}
+        self.backup_dir = Path(self.config.get('backup_dir', './backups'))
+        self.backup_dir.mkdir(exist_ok=True)
+
+    def create_backup(self, file_path: str) -> str:
+        """Create a backup of the file before modification"""
+        try:
+            file_path = Path(file_path)
+            timestamp = int(asyncio.get_event_loop().time())
+            backup_name = f"{file_path.stem}_{timestamp}{file_path.suffix}.backup"
+            backup_path = self.backup_dir / backup_name
+            
+            import shutil
+            shutil.copy2(file_path, backup_path)
+            
+            logger.info(f"Backup created: {backup_path}")
+            return str(backup_path)
+            
+        except Exception as e:
+            logger.error(f"Failed to create backup: {e}")
+            return None
+
     async def apply_fix(self, fix_suggestion: FixSuggestion, dry_run: bool = False) -> FixResult:
         """Apply a fix suggestion to the file"""
         if dry_run:
@@ -139,7 +149,3 @@ class CodeFixer:
                 applied_fix=None,
                 backup_path=None
             )
-    
-    def show_diff(self, fix_suggestion: FixSuggestion) -> str:
-        """Show a diff of the proposed changes"""
-        return f"- {fix_suggestion.original_code}\n+ {fix_suggestion.fixed_code}"
